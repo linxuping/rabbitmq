@@ -9,9 +9,7 @@ import time
 
 connection = pika.BlockingConnection(pika.ConnectionParameters(
         host='192.168.12.200'))
-
 channel = connection.channel()
-
 channel.queue_declare(queue='rpc_video_collect')
 
 count = 0
@@ -28,8 +26,17 @@ def download_pkg(pkgurl):
       return sys.exc_info()
     return "ok"
 
+def deco_m3ua(func):
+    def _deco(ch, method, props, body):
+        print "into _deco"
+        #P34432555_default.m3u8 get child.m3ua
+        func(ch, method, props, body)
+    return _deco
 
+@deco_m3ua
 def on_request_thn(ch, method, props, body):
+    if None == body:
+        ch.basic_ack(delivery_tag = method.delivery_tag)
     _url = str(body)
 
     print(" [.] downloading(%s)" % _url)
@@ -37,8 +44,7 @@ def on_request_thn(ch, method, props, body):
     response = download_pkg(_url)
     for i in range(3):
         try:
-            ch.basic_publish(exchange='',
-                     routing_key=props.reply_to,
+            ch.basic_publish(exchange='',routing_key=props.reply_to,
                      properties=pika.BasicProperties(correlation_id = \
                                                          props.correlation_id),
                      body=str(response))
