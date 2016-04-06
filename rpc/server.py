@@ -29,12 +29,12 @@ def download_pkg(pkgurl):
     return "ok"
 
 
-def thread_func_download(ch, method, props, body):
+def on_request_thn(ch, method, props, body):
     _url = str(body)
 
     print(" [.] downloading(%s)" % _url)
-    response = download_pkg(_url)
     start = time.time()
+    response = download_pkg(_url)
     for i in range(3):
         try:
             ch.basic_publish(exchange='',
@@ -49,10 +49,14 @@ def thread_func_download(ch, method, props, body):
     print(" [.] downloading(%s) %.03f fin." % (_url,time.time()-start))
 
 def on_request(ch, method, props, body):
-    thread.start_new_thread(thread_func_download, (ch, method, props, body))
+    thread.start_new_thread(on_request_thn, (ch, method, props, body))
 
+'''thread mode.
 channel.basic_qos(prefetch_count=2)
 channel.basic_consume(on_request, queue='rpc_video_collect')
+'''
+channel.basic_qos(prefetch_count=1)
+channel.basic_consume(on_request_thn, queue='rpc_video_collect')
 
 print(" [x] Awaiting RPC requests")
 while 1:
