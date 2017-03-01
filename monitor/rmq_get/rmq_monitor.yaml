@@ -1,0 +1,11 @@
+tseg: #check 30*60 each time.
+    1200
+tavg: #tseg / tavg
+    1
+tsleep: 
+    30
+queues:
+    ["q_update","q_upload"]
+phones:
+    ["12341234123"]
+
